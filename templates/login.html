@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title|default('Admin Login') }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>    <div class="container">
+        <h2><i class="fas fa-lock"></i> Admin Login</h2>
+        
+        <div class="mb-4">
+            <p class="text-secondary">
+                <i class="fas fa-info-circle"></i>
+                Enter your admin password to access the dashboard
+            </p>
+        </div>
+        
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, msg in messages %}
+              <div class="flash {{ category }}">{{ msg }}</div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+        
+        <form method="post" id="loginForm">
+            <div class="form-group">
+                <div class="input-container">
+                    <input name="password" id="password" type="password" placeholder=" " required>
+                    <label for="password"><i class="fas fa-key"></i> Admin Password</label>
+                </div>
+            </div>
+            
+            <button type="submit" class="btn-submit" id="loginBtn">
+                <i class="fas fa-sign-in-alt"></i> Access Dashboard
+            </button>
+        </form>
+        
+        <div class="footer">
+            <p>
+                <a href="{{ url_for('index') }}">
+                    <i class="fas fa-arrow-left"></i>
+                    Back to Booking Page
+                </a>
+            </p>
+        </div>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const loginForm = document.getElementById('loginForm');
+            const loginBtn = document.getElementById('loginBtn');
+            const passwordInput = document.getElementById('password');
+            
+            loginForm.addEventListener('submit', function(e) {
+                if (passwordInput.value.trim()) {
+                    loginBtn.innerHTML = '<span class="loading-spinner"></span> Authenticating...';
+                    loginBtn.disabled = true;
+                }
+            });
+            
+            // Add enter key support
+            passwordInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    loginForm.submit();
+                }
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title|default('Book Interview') }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <h2><i class="fas fa-calendar-check"></i> Book a Mock Interview</h2>
+        
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, msg in messages %}
+              <div class="flash {{ category }}">{{ msg }}</div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}        <form method="post" id="bookingForm">
+            <div class="form-group">
+                <div class="input-container">
+                    <input name="name" id="name" placeholder=" " required>
+                    <label for="name"><i class="fas fa-user"></i> Full Name</label>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <div class="input-container">
+                    <input name="email" id="email" type="email" placeholder=" " required>
+                    <label for="email"><i class="fas fa-envelope"></i> Email Address</label>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <div class="input-container">
+                    <input name="phone" id="phone" type="tel" placeholder=" " required>
+                    <label for="phone"><i class="fas fa-phone"></i> Phone Number</label>
+                </div>
+            </div>
+            
+            <div class="form-group calendar-container">
+                <h3><i class="fas fa-calendar-alt"></i> Select Interview Date</h3>
+                <p>Please choose a date for your interview:</p>                <div class="date-input-container">
+                    <input type="date" name="interview_date" id="datePicker" required
+                           min="{{ default_date }}" max="{{ max_date }}" value="{{ default_date }}" 
+                           class="date-input">
+                </div>
+                
+                <div class="date-info" id="dateInfo">
+                    <p><strong>Selected Date:</strong> <span id="selectedDateDisplay"></span></p>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <h3><i class="fas fa-clock"></i> Available Time Slots</h3>
+                <p>Please select a time slot for your interview:</p>
+                  <div class="slot-container" id="slotContainer">
+                    <div id="loadingSlots">
+                        <p>Loading available slots... <span class="loading-spinner"></span></p>
+                    </div>
+                </div>
+                
+                <input type="hidden" name="slot" id="selectedSlot">
+                
+                <button type="submit" class="btn-submit" id="submitBtn" disabled>
+                    <i class="fas fa-calendar-check"></i>
+                    Book My Interview
+                </button>
+            </div>
+        </form>          <div class="footer">
+            <!-- Admin login link removed -->
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const datePicker = document.getElementById('datePicker');
+            const slotContainer = document.getElementById('slotContainer');
+            const loadingSlots = document.getElementById('loadingSlots');            const selectedDateDisplay = document.getElementById('selectedDateDisplay');
+            const bookingForm = document.getElementById('bookingForm');
+            const selectedSlotInput = document.getElementById('selectedSlot');
+            const submitBtn = document.getElementById('submitBtn');
+            
+            // Initialize form validation
+            const nameInput = document.getElementById('name');
+            const emailInput = document.getElementById('email');
+            const phoneInput = document.getElementById('phone');
+            
+            // Add input validation listeners
+            [nameInput, emailInput, phoneInput].forEach(input => {
+                input.addEventListener('input', validateForm);
+                input.addEventListener('blur', validateForm);
+            });
+            
+            // Initial load of slots
+            if (datePicker.value) {
+                loadSlots(datePicker.value);
+                updateSelectedDateDisplay(datePicker);
+            }
+            
+            // Listen for date changes
+            datePicker.addEventListener('change', function() {
+                loadSlots(this.value);
+                updateSelectedDateDisplay(this);
+            });
+              function updateSelectedDateDisplay(dateInput) {
+                if (dateInput.value) {
+                    // Format date as: Wednesday, May 30, 2025
+                    const selectedDate = new Date(dateInput.value);
+                    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+                    selectedDateDisplay.textContent = selectedDate.toLocaleDateString('en-US', options);
+                } else {
+                    selectedDateDisplay.textContent = 'None selected';
+                }
+            }
+            
+            function loadSlots(date) {
+                if (!date) return;
+                  // Show loading with enhanced spinner
+                slotContainer.innerHTML = '<div id="loadingSlots"><p>Loading available slots... <span class="loading-spinner"></span></p></div>';
+                
+                // Fetch available slots for the selected date
+                fetch(`/get_available_slots?date=${date}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        slotContainer.innerHTML = '';
+                        
+                        if (data.error) {
+                            slotContainer.innerHTML = `<div class="flash danger"><p>${data.error}</p></div>`;
+                            return;
+                        }
+                        
+                        if (!data.slots || data.slots.length === 0) {
+                            slotContainer.innerHTML = `
+                                <div class="empty-message">
+                                    <p>No slots available for this date.</p>
+                                    <p>Please select a different date.</p>
+                                </div>`;
+                            return;
+                        }
+                        
+                        // Create buttons for each slot with enhanced styling
+                        data.slots.forEach(slot => {
+                            const button = document.createElement('button');
+                            button.type = 'button';
+                            button.innerHTML = `<i class="fas fa-clock"></i> ${slot.time}`;
+                            
+                            if (!slot.available) {
+                                button.disabled = true;
+                                button.innerHTML += ' <span style="color: var(--danger); font-weight: bold;">✕</span>';
+                                button.title = 'This slot is already booked';
+                            } else {
+                                button.addEventListener('click', function() {
+                                    // Remove active class from all buttons
+                                    document.querySelectorAll('#slotContainer button').forEach(btn => {
+                                        btn.classList.remove('active');
+                                    });
+                                    
+                                    // Add active class to clicked button
+                                    this.classList.add('active');
+                                    
+                                    // Set the selected slot value
+                                    selectedSlotInput.value = slot.time;
+                                    
+                                    // Enable submit button
+                                    submitBtn.disabled = false;
+                                    
+                                    // Validate and enable form submission
+                                    validateForm();
+                                });
+                            }
+                            
+                            slotContainer.appendChild(button);
+                        });
+                    })
+                    .catch(error => {
+                        console.error('Error loading slots:', error);
+                        slotContainer.innerHTML = `<p class="error">Error loading slots. Please try again.</p>`;
+                    });
+            }
+              function validateForm() {
+                const name = nameInput.value.trim();
+                const email = emailInput.value.trim();
+                const phone = phoneInput.value.trim();
+                const selectedSlot = selectedSlotInput.value;
+                
+                const isValid = name && email && phone && selectedSlot;
+                
+                // Enable/disable submit button based on validation
+                submitBtn.disabled = !isValid;
+                
+                if (isValid) {
+                    submitBtn.classList.add('btn-success');
+                    submitBtn.innerHTML = '<i class="fas fa-calendar-check"></i> Book My Interview';
+                } else {
+                    submitBtn.classList.remove('btn-success');
+                    submitBtn.innerHTML = '<i class="fas fa-calendar-check"></i> Please Complete Form';
+                }
+                
+                return isValid;
+            }
+            
+            // Form submission with enhanced feedback
+            bookingForm.addEventListener('submit', function(e) {
+                if (!validateForm()) {
+                    e.preventDefault();
+                    
+                    // Show validation errors
+                    if (!nameInput.value.trim()) {
+                        nameInput.focus();
+                        showValidationError(nameInput, 'Please enter your full name');
+                        return;
+                    }
+                    
+                    if (!emailInput.value.trim()) {
+                        emailInput.focus();
+                        showValidationError(emailInput, 'Please enter your email address');
+                        return;
+                    }
+                    
+                    if (!phoneInput.value.trim()) {
+                        phoneInput.focus();
+                        showValidationError(phoneInput, 'Please enter your phone number');
+                        return;
+                    }
+                    
+                    if (!selectedSlotInput.value) {
+                        alert('Please select a time slot for your interview');
+                        return;
+                    }
+                } else {
+                    // Show loading state
+                    submitBtn.innerHTML = '<span class="loading-spinner"></span> Booking Interview...';
+                    submitBtn.disabled = true;
+                }
+            });
+            
+            function showValidationError(input, message) {
+                // Remove existing error
+                const existingError = input.parentNode.querySelector('.validation-error');
+                if (existingError) {
+                    existingError.remove();
+                }
+                
+                // Add error message
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'validation-error';
+                errorDiv.style.cssText = `
+                    color: var(--danger);
+                    font-size: 0.875rem;
+                    margin-top: 0.5rem;
+                    padding: 0.5rem;
+                    background: var(--danger-bg);
+                    border-radius: var(--border-radius);
+                    border: 1px solid var(--danger);
+                `;
+                errorDiv.textContent = message;
+                
+                input.parentNode.appendChild(errorDiv);
+                
+                // Remove error after 5 seconds
+                setTimeout(() => {
+                    if (errorDiv.parentNode) {
+                        errorDiv.remove();
+                    }
+                }, 5000);
+            }
+        });
+    </script>
+</body>
+</html>

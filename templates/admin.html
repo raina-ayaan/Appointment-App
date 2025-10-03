@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title|default('Admin Panel') }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>    <div class="container">
+        <h2><i class="fas fa-user-shield"></i> Admin Dashboard</h2>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, msg in messages %}
+              <div class="flash {{ category }}">{{ msg }}</div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+        
+
+        <div class="table-container">
+            <div class="mb-3">
+                <h3><i class="fas fa-calendar-alt"></i> Upcoming Interview Bookings</h3>
+                <p class="text-secondary">Manage and view all upcoming scheduled interviews</p>
+            </div>
+            {% if upcoming_bookings %}
+            <form method="post" id="cancelForm">
+            <table>
+                <thead>
+                    <tr>
+                        <th><i class="fas fa-user"></i> Name</th>
+                        <th><i class="fas fa-envelope"></i> Email</th>
+                        <th><i class="fas fa-phone"></i> Phone</th>
+                        <th><i class="fas fa-calendar"></i> Date</th>
+                        <th><i class="fas fa-clock"></i> Time Slot</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for b in upcoming_bookings %}
+                    <tr>
+                        <td>
+                            <strong>{{ b[1] }}</strong>
+                        </td>
+                        <td>
+                            <a href="mailto:{{ b[2] }}" style="color: var(--primary-color); text-decoration: none;">
+                                {{ b[2] }}
+                            </a>
+                        </td>
+                        <td>
+                            <a href="tel:{{ b[3] }}" style="color: var(--success); text-decoration: none;">
+                                {{ b[3] }}
+                            </a>
+                        </td>
+                        <td>
+                            <span style="font-weight: 500; color: var(--text-primary);">
+                                {{ b[5] }}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="badge" style="
+                                background: var(--gradient-accent);
+                                color: var(--text-light);
+                                padding: 0.5rem 1rem;
+                                border-radius: var(--border-radius-full);
+                                font-weight: 500;
+                                font-size: 0.875rem;
+                            ">
+                                {{ b[4] }}
+                            </span>
+                        </td>
+                        <td>
+                            <button type="submit" name="cancel_id" value="{{ b[0] }}" class="btn btn-danger" onclick="return confirm('Are you sure you want to cancel this interview?');">
+                                <i class="fas fa-times"></i> Cancel
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            </form>
+            {% else %}
+            <div class="empty-message">
+                <p>No upcoming bookings available.</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="table-container" style="margin-top:2rem;">
+            <div class="mb-3">
+                <h3><i class="fas fa-calendar-check"></i> Completed Interview Bookings</h3>
+                <p class="text-secondary">These interviews have already been completed</p>
+            </div>
+            {% if completed_bookings %}
+            <table>
+                <thead>
+                    <tr>
+                        <th><i class="fas fa-user"></i> Name</th>
+                        <th><i class="fas fa-envelope"></i> Email</th>
+                        <th><i class="fas fa-phone"></i> Phone</th>
+                        <th><i class="fas fa-calendar"></i> Date</th>
+                        <th><i class="fas fa-clock"></i> Time Slot</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for b in completed_bookings %}
+                    <tr>
+                        <td>
+                            <strong>{{ b[1] }}</strong>
+                        </td>
+                        <td>
+                            <a href="mailto:{{ b[2] }}" style="color: var(--primary-color); text-decoration: none;">
+                                {{ b[2] }}
+                            </a>
+                        </td>
+                        <td>
+                            <a href="tel:{{ b[3] }}" style="color: var(--success); text-decoration: none;">
+                                {{ b[3] }}
+                            </a>
+                        </td>
+                        <td>
+                            <span style="font-weight: 500; color: var(--text-primary);">
+                                {{ b[5] }}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="badge" style="
+                                background: var(--gradient-accent);
+                                color: var(--text-light);
+                                padding: 0.5rem 1rem;
+                                border-radius: var(--border-radius-full);
+                                font-weight: 500;
+                                font-size: 0.875rem;
+                            ">
+                                {{ b[4] }}
+                            </span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="empty-message">
+                <p>No completed bookings yet.</p>
+            </div>
+            {% endif %}
+        </div>
+        
+        <div class="footer">
+            <a href="{{ url_for('logout') }}" class="btn-logout">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </a>
+        </div>
+    </div>
+</body>
+</html>
