@@ -165,6 +165,3 @@ ON DUPLICATE KEY UPDATE password = VALUES(password);
 | "Slot already booked" warning | The requested time slot is already taken for that date. Choose a different slot. |
 | Emails are not delivered | Verify SMTP credentials, port/TLS settings, and check provider logs for rejected messages. |
 | Unable to log in as admin | Confirm the hashed password in the database matches the password you are entering. |
-
-## License
-This project does not currently specify a license. Add one if you plan to distribute or open-source the application.
