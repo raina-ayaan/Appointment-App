@@ -138,11 +138,6 @@ ON DUPLICATE KEY UPDATE password = VALUES(password);
    The app runs on `http://127.0.0.1:5000/` by default.
 3. Access the admin dashboard at `http://127.0.0.1:5000/admin` (you will be redirected to the login page if not authenticated).
 
-For production, use a WSGI server such as Gunicorn:
-
-```bash
-gunicorn -b 0.0.0.0:8000 app:app
-```
 
 ## Available Routes
 | Route | Methods | Description |
@@ -162,7 +157,6 @@ gunicorn -b 0.0.0.0:8000 app:app
 - Configure environment variables via your hosting provider's secret management system.
 - Ensure the SMTP provider allows connections from your hosting environment.
 - Run database migrations manually using the SQL statements above or automate them via your deployment pipeline.
-- Disable `debug=True` in production by using an environment variable (e.g., `FLASK_DEBUG=0`) or adjusting the entry point.
 
 ## Troubleshooting
 | Issue | Resolution |
